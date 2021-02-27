@@ -1,37 +1,6 @@
 version: '3'
 
 services:
-  metrics:
-    build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
-    container_name: 'sample-metrics-bot-metrics'
-    restart: always
-    ports:
-      - "8080:80"
-    volumes:
-      - .:/app/
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - sample-metrics-network
-
-  app:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: 'sample-metrics-bot-app'
-    restart: always
-    volumes:
-      - .:/app/
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - sample-metrics-network
 
   worker:
     build:
@@ -46,74 +15,9 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - sample-metrics-network
+      - tier
 
-
-  mysql:
-    image: mysql:5.7.22
-    container_name: 'sample-metrics-bot-mysql'
-    restart: always
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_ROOT_HOST: '%'
-    volumes:
-      - ./docker/sql/structure.sql:/docker-entrypoint-initdb.d/dump.sql
-    networks:
-      - sample-metrics-network
-
-  redis:
-    container_name: 'sample-metrics-bot-redis'
-    image: redis:3.2
-    restart: always
-    ports:
-      - "127.0.0.1:6379:6379/tcp"
-    networks:
-      - sample-metrics-network
-
-  pma:
-    image: phpmyadmin/phpmyadmin
-    container_name: 'sample-metrics-bot-pma'
-    environment:
-      PMA_HOST: mysql
-      PMA_PORT: 3306
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-    volumes:
-      - ./docker/pma/uploads.ini:/usr/local/etc/php/conf.d/pma.ini
-    ports:
-      - '8006:80'
-    networks:
-      - sample-metrics-network
-
-  prometheus:
-    image: prom/prometheus:v2.0.0
-    container_name: 'sample-metrics-bot-prometheus'
-    command: --config.file=/etc/prometheus/prometheus.yml
-    restart: always
-    ports:
-      - 9090:9090
-    volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - sample-metrics-network
-
-  grafana:
-    container_name: 'sample-metrics-bot-grafana'
-    image: grafana/grafana:7.1.1
-    restart: always
-    ports:
-      - 3000:3000
-    volumes:
-      - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini
-      - ./docker/grafana/provisioning/:/etc/grafana/provisioning/
-      - ./docker/grafana/dashboards/metrics.json:/var/lib/grafana/dashboards/metrics.json
-      - grafanadata:/var/lib/grafana
-    networks:
-      - sample-metrics-network
-
-
-volumes:
-  grafanadata: {}
 networks:
-  sample-metrics-network:
+  tier:
+    external:
+      name: telegram-bots-network
